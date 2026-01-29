@@ -55,7 +55,8 @@ function init() {
     //Initialize board state 
     board.buttons = [];
     //Initialize player input states
-    playerInputs.nums = [];
+    playerInputs.numbers = [];
+    playerInputs.operations = null;
     startTime = Date.now();
     timeCount.textContent = gameState.time;
 
@@ -75,16 +76,21 @@ function init() {
     targetNumber.textContent = gameState.target;
     startNewGame.setAttribute("hidden", "hidden");
     //clear history
-    while (historyBoard.firstElementChild) {
-        historyBoard.firstElementChild.remove();
-    }
+    //while (historyBoard.firstElementChild) {
+    //    historyBoard.firstElementChild.remove();
+    //}
+    const historyEntries = historyBoard.querySelectorAll(".history-move");
+    historyEntries.forEach(entry => entry.remove())
     //winMessage.setAttribute("hidden", "hidden")
     winMessage.classList.remove("show");
+    //render();
+    countTime();
 }
 
 function render() {
+    console.log("render running")
     playerSelect();
-    countTime();
+    //countTime();
 }
 
 function countTime() {
@@ -258,7 +264,9 @@ function createHistory(txt) {
     const prevLine = historyBoard.firstElementChild;
     if (prevLine) {
         const prevUndo = prevLine.querySelector('button');
-        prevUndo.hidden = true;
+        if (prevUndo) {
+            prevUndo.hidden = true;
+        }
     }
 
     const newLine = document.createElement("div");
@@ -354,7 +362,7 @@ function playerSelect(){
             return;
         }
         //Second number
-        if (playerInputs.numbers.length === 1 && playerInputs.operations.length > 0) {
+        if (playerInputs.numbers.length === 1 && playerInputs.operations) {
             if (((playerInputs.operations === '-') && (playerInputs.numbers[0].value < value)) ||
             ((playerInputs.operations === '/') && (playerInputs.numbers[0].value < value) && (playerInputs.numbers[0].value % value !== 0))) {
                 console.log(playerInputs.numbers[0].value)
