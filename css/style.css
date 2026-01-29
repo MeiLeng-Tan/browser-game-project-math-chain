@@ -8,21 +8,44 @@ body {
 .game {
     max-width: 600px;
     margin: 0 auto;
-    padding: 30px 20px;
+    padding: 5px 5px;
     text-align: center;
 }
 
 h1 {
     font-size: 3rem;
     letter-spacing: 2px;
-    margin-bottom: 30px;
+    margin-bottom: 10px;
+}
+
+#viewInstructions {
+    margin: 5px auto 5px;
+    padding: 6px 12px;
+    font-size: 1rem;
+    cursor: pointer;
+    background-color: #FFF7E6;
+    border: 2px solid #222;
+    border-radius: 8px;
+}
+
+#instructions {
+    max-width: 500px;
+    margin: 5px auto 20px;
+    padding: 15px;
+    background-color: #FFF7E6;
+    border: 2px solid #222;
+    border-radius: 12px;
+    font-size: 1rem;
+    line-height: 1.5;
+    text-align: left;
 }
 
 .player-status {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-around;
     align-items: center;
-    margin-bottom: 30px;
+    margin-top: 5px;
+    margin-bottom: 5px;
 }
 
 .player-status h2 {
@@ -31,7 +54,7 @@ h1 {
 }
 
 .target-number {
-    margin-bottom: 40px;
+    margin-bottom: 20px;
 }
 
 .target-number h2 {
@@ -45,20 +68,18 @@ h1 {
 }
 
 .num-board {
-    /*display: grid;
-    grid-template-columns: repeat(6, 1fr);*/
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
     gap: 20px;
-    margin-bottom: 35px;
+    margin-bottom: 15px;
 }
 
 .operator-board {
     display: flex;
     justify-content: center;
     gap: 20px;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
 }
 
 .btn {
@@ -97,8 +118,18 @@ h1 {
     display: none !important;
 }
 
+.btn-number.selected{
+    background-color: #670e0e;
+    color: white;
+}
+
 .btn-operator {
     width: 90px;
+}
+
+.btn-operator.selected{
+    background-color: #670e0e;
+    color: white;
 }
 
 .win-message {

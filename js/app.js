@@ -3,8 +3,8 @@ const operations = ['+', '-', '*', '/'];
 const minRandomNum = 1;
 const maxRandomNum = 50;
 let startTime;
+
 /*---------------------------- Variables (state) ----------------------------*/
-// Game states 
 const gameState = {
     target: 0,
     time: 0,
@@ -14,25 +14,25 @@ const gameState = {
     level: [6, 8, 10]
 };
 
-const board = {
-  buttons: [] // [{ idx, value, hidden }]
+const numBoardButtonVis = {
+    visible: [], //true if visible
 };
 
 const playerInputs = {
-  numbers: [],  // [{ idx, value }]
-  operations: null, 
+  numbers: [],  //Store { idx, value }
+  operation: null, 
 };
 
 const moveHistory = {
-  steps: []   // reversible actions
+  moves: []  
 };
-
 
 /*------------------------ Cached Element References ------------------------*/
 const targetNumber = document.querySelector("#targetNum");
 const numberBoard = document.querySelector(".num-board");
 const numberButtons = document.querySelectorAll(".btn-number");
 const operatorBoard = document.querySelector(".operator-board");
+const operatorButtons = document.querySelectorAll(".btn-operator");
 const timeCount = document.querySelector("#time")
 const movesCount = document.querySelector("#moves")
 const historyBoard = document.querySelector(".history-board");
@@ -40,57 +40,58 @@ const startNewGame = document.querySelector("#startNewGame");
 const winMessage = document.querySelector(".win-message");
 const totalTime = document.querySelector("#total-time");
 const totalMoves = document.querySelector("#total-moves");
+const instructionsBtn = document.querySelector("#viewInstructions");
+const instructions = document.querySelector("#instructions");
 
 /*-------------------------------- Functions --------------------------------*/
 init();
 render();
 
 function init() {
-    //Initialize game state
     gameState.time = 0;
     gameState.moves = 0;
     gameState.status = 'playing';
-    //Initialize history
-    moveHistory.steps = [];
-    //Initialize board state 
-    board.buttons = [];
-    //Initialize player input states
+    moveHistory.moves = [];
     playerInputs.numbers = [];
-    playerInputs.operations = null;
+    playerInputs.operation = null;
     startTime = Date.now();
-    timeCount.textContent = gameState.time;
-
-    //Initialize random numbers array
+    //Initialize game board
     gameState.randomNumArr = generateRandomNumber(6, 1);
-    //Generate target number from the random numbers array
     gameState.target = generateTarget(gameState.randomNumArr, 5)
-    
-    //Clear the number buttons
-    numberButtons.forEach((btn, i) => {
-        btn.dataset.idx = i;
-        btn.textContent = gameState.randomNumArr[i];
-        btn.removeAttribute("hidden");
-    })
-
-    movesCount.textContent = gameState.moves;
-    targetNumber.textContent = gameState.target;
-    startNewGame.setAttribute("hidden", "hidden");
+    //Initialize board state 
+    numBoardButtonVis.visible = new Array(gameState.randomNumArr.length).fill(true);
     //clear history
-    //while (historyBoard.firstElementChild) {
-    //    historyBoard.firstElementChild.remove();
-    //}
-    const historyEntries = historyBoard.querySelectorAll(".history-move");
-    historyEntries.forEach(entry => entry.remove())
-    //winMessage.setAttribute("hidden", "hidden")
-    winMessage.classList.remove("show");
-    //render();
-    countTime();
+    const historyEls = historyBoard.querySelectorAll(".history-move");
+    historyEls.forEach(el => el.remove())
+    // update UI    
+    render();
+    countTime();    
 }
 
 function render() {
-    console.log("render running")
-    playerSelect();
-    //countTime();
+    //Update game status
+    movesCount.textContent = gameState.moves;
+    targetNumber.textContent = gameState.target;
+    //Update number button in game board
+    numberButtons.forEach((btn, i) => {
+        btn.dataset.idx = i;
+        btn.textContent = gameState.randomNumArr[i];
+        if (!numBoardButtonVis.visible[i]) {
+            btn.setAttribute("hidden", "hidden")
+        } else {
+            btn.removeAttribute("hidden");
+        }
+    })    
+    //Update win message UI
+    if (gameState.status === 'win') {
+        totalTime.textContent = gameState.time;
+        totalMoves.textContent = gameState.moves;
+        winMessage.classList.add("show");
+        startNewGame.removeAttribute("hidden");
+    } else {
+        winMessage.classList.remove("show");
+        startNewGame.setAttribute("hidden", "hidden")
+    }
 }
 
 function countTime() {
@@ -103,7 +104,6 @@ function countTime() {
     requestAnimationFrame(countTime);    
 }
 
-/* Function to generate a random numbers array */
 function generateRandomNumber(n, nDoubleDigit){
     const randomNums = [];
     let nDouble = 0;
@@ -123,13 +123,11 @@ function generateRandomNumber(n, nDoubleDigit){
     return randomNums;
 }
 
-//function to pick random operations
 function randomOperation(operations) {
     let idx = Math.floor(Math.random() * operations.length);
     return operations[idx];
 }
 
-//Function to get a valid operation
 function getValidOperation(a, b){
     let operation = randomOperation(operations);
     while (operation === '/' && (a % b !== 0)) {
@@ -151,13 +149,11 @@ function calculate(operation, a, b) {
     }
 }
 
-/*Function to generate target numbers from the generated random numbers array. */
-function generateTarget(randomNumsArr, nSelect) {
-    //Pick nSelect random numbers
+function generateTarget(randomNumsArr, maxSelectNum) {
     const availableNums = [...randomNumsArr];
     const pickedNums = [];
     
-    while (pickedNums.length < nSelect && availableNums.length > 0) {
+    while (pickedNums.length < maxSelectNum && availableNums.length > 0) {
         let idx = Math.floor(Math.random() * availableNums.length);
         pickedNums.push(availableNums.splice(idx, 1)[0]);
     }
@@ -167,7 +163,7 @@ function generateTarget(randomNumsArr, nSelect) {
     for (let i = 0; i < pickedNums.length; ) {
         let usePair = (Math.random() >= 0.5) && (i + 1 < pickedNums.length);
         if (usePair) {
-            //Swapping to ensure the number is positive
+            //Swapping to ensure the result is positive
             if (pickedNums[i] < pickedNums[i + 1]) {
                 let operation = getValidOperation(pickedNums[i + 1], pickedNums[i]);
                 let result = calculate(operation, pickedNums[i + 1], pickedNums[i]);
@@ -198,17 +194,9 @@ function generateTarget(randomNumsArr, nSelect) {
     return target;
 }
 
-function handleWin() {
-    gameState.status = 'win';
-    totalTime.textContent = gameState.time;
-    totalMoves.textContent = gameState.moves;
-    winMessage.classList.add("show");
-    startNewGame.removeAttribute("hidden");
-}
-
 function solveEquation() {
     const [a, b] = playerInputs.numbers;
-    const result = calculate(playerInputs.operations, a.value, b.value)
+    const result = calculate(playerInputs.operation, a.value, b.value)
 
     const move = {
         aIdx: a.idx,
@@ -216,104 +204,97 @@ function solveEquation() {
         aVal: a.value,
         bVal: b.value,
         result: result,
-        operation: playerInputs.operations,
+        operation: playerInputs.operation,
     };
 
-    moveHistory.steps.push(move);
-    // Update number board
-    updateNumberBoard(move);
-    updateHistory(`= ${result}`);
-    createUndoButton(move);
+    moveHistory.moves.push(move);
 
-    playerInputs.numbers = [];
-    playerInputs.operations = null;
+    // Update game states
+    gameState.randomNumArr[a.idx] = result;
     gameState.moves += 1;
-    movesCount.textContent = gameState.moves;
-
+    
+    // Update button visibility
+    numBoardButtonVis.visible[b.idx] = false;
+    // Update move history
+    updateHistoryEl(`= ${result}`);
+    createUndoButton(move);
+    
+    // Reset player input
+    playerInputs.numbers = [];
+    playerInputs.operation = null;
+    
+    // Handle win
     if (result === gameState.target) {
-        handleWin();
+        gameState.status = 'win';
     }
-}
-
-function updateNumberBoard(move) {
-    //Update board
-    const aBtn = numberButtons[move.aIdx];
-    const bBtn = numberButtons[move.bIdx];
-
-    aBtn.textContent = move.result;
-    bBtn.setAttribute("hidden", "hidden");
+    render();
 }
 
 function undoMove(move, historyLine) {
-    const aBtn = numberButtons[move.aIdx];
-    const bBtn = numberButtons[move.bIdx];
-    //restore number board to initial value
-    aBtn.textContent = move.aVal;
-    bBtn.textContent = move.bVal;
-    bBtn.removeAttribute("hidden");
-
-    //Remove line from history
-    moveHistory.steps.pop();
-    deleteHistory();
+    gameState.randomNumArr[move.aIdx] = move.aVal;
+    numBoardButtonVis.visible[move.bIdx] = true;
     gameState.moves -= 1;
-    movesCount.textContent = gameState.moves;
+
+    // Remove history element
+    moveHistory.moves.pop();
+    deleteHistoryEl();
+
+    render();    
 }
 
-function createHistory(txt) {
-    //Hide previous undo button
-    const prevLine = historyBoard.firstElementChild;
-    if (prevLine) {
-        const prevUndo = prevLine.querySelector('button');
-        if (prevUndo) {
-            prevUndo.hidden = true;
+function createHistoryElement(txt) {
+    //Hide previous history element undo button
+    const prevHistoryEl = historyBoard.firstElementChild;
+    if (prevHistoryEl) {
+        const prevUndoBtn = prevHistoryEl.querySelector('button');
+        if (prevUndoBtn) {
+            prevUndoBtn.hidden = true;
         }
     }
 
-    const newLine = document.createElement("div");
-    newLine.className = "history-move";
+    const newHistoryEl = document.createElement("div");
+    newHistoryEl.className = "history-move";
 
     const p = document.createElement("p");
     p.textContent = txt;
 
-    newLine.appendChild(p);
-    historyBoard.prepend(newLine);
+    newHistoryEl.appendChild(p);
+    historyBoard.prepend(newHistoryEl);
 }
 
-function updateHistory(txt, action = 'append') {
-    const line = historyBoard.firstElementChild;
-    if (!line) {
+function updateHistoryEl(txt, action = 'append') {
+    const historyEl = historyBoard.firstElementChild;
+    if (!historyEl) {
         return;
     } else {
         if (action === 'append'){
-            line.querySelector("p").textContent += ` ${txt}`;
+            historyEl.querySelector("p").textContent += ` ${txt}`;
         } else if (action === 'remove'){
-            console.log(txt)
-            line.querySelector("p").textContent = line.querySelector("p").textContent.replace(` ${txt}`, "");
-            console.log(line.querySelector("p").textContent)
+            historyEl.querySelector("p").textContent = historyEl.querySelector("p").textContent.replace(` ${txt}`, "");
         }
     }
 }
 
-function deleteHistory() {
-    const history = historyBoard.firstElementChild;
-    history.remove();
+function deleteHistoryEl() {
+    const delHistoryEl = historyBoard.firstElementChild;
+    delHistoryEl.remove();
     //Restore undo button
-     const prevLine = historyBoard.firstElementChild;
-    if (prevLine) {
-        const prevUndo = prevLine.querySelector('button');
-        prevUndo.hidden = false;
+     const historyEl = historyBoard.firstElementChild;
+    if (historyEl) {
+        const undoBtn = historyEl.querySelector('button');
+        undoBtn.hidden = false;
     }
 }
 
 function createUndoButton(move) {
-    const line = historyBoard.firstElementChild;
-    const undoBtn = document.createElement("button");
+    const historyEl = historyBoard.firstElementChild;
+    const undoBtnEl = document.createElement("button");
 
-    undoBtn.textContent = 'Undo';
-    undoBtn.addEventListener('click', (evt) => {
-        undoMove(move, line);
+    undoBtnEl.textContent = 'Undo';
+    undoBtnEl.addEventListener('click', (evt) => {
+        undoMove(move, historyEl);
     })
-    line.appendChild(undoBtn);
+    historyEl.appendChild(undoBtnEl);
 }
 
 function resetSelectedButton() {
@@ -324,104 +305,105 @@ function resetSelectedButton() {
 }
 
 /*----------------------------- Event Listeners -----------------------------*/
-//Select number
-function playerSelect(){
-    numberBoard.addEventListener('click', (evt) => {
-        if (!evt.target.classList.contains("btn-number")) {
-            return;
-        }
+numberBoard.addEventListener('click', (evt) => {
+    if (!evt.target.classList.contains("btn-number")) {
+        return;
+    }
         
-        const idx = Number(evt.target.dataset.idx);
-        const value = Number(evt.target.textContent);
+    const idx = Number(evt.target.dataset.idx);
+    const value = Number(evt.target.textContent);
 
-        //Toggle selection
-        const dupSelection = playerInputs.numbers.findIndex((num) => {
-            return num.idx === idx;
-        });
-        if (dupSelection !== -1) {
-            if (playerInputs.numbers.length === 1) {
-                console.log('clear duplicates')
-                playerInputs.numbers.splice(dupSelection, 1);
-                deleteHistory();
-                evt.target.classList.remove("selected");
-                return;
-            } else if (playerInputs.numbers.length === 2) {
-                console.log('clear 2nd num');
-                updateHistory(value, 'remove');
-                playerInputs.numbers.splice(dupSelection, 1);
-                evt.target.classList.remove("selected");
-                return;
-            }
-        }
-
-        //First number
-        if (playerInputs.numbers.length === 0) {
-            evt.target.classList.add("selected");
-            playerInputs.numbers.push({idx, value});
-            createHistory(value);
-            return;
-        }
-        //Second number
-        if (playerInputs.numbers.length === 1 && playerInputs.operations) {
-            if (((playerInputs.operations === '-') && (playerInputs.numbers[0].value < value)) ||
-            ((playerInputs.operations === '/') && (playerInputs.numbers[0].value < value) && (playerInputs.numbers[0].value % value !== 0))) {
-                console.log(playerInputs.numbers[0].value)
-                return;
-            } else {
-                evt.target.classList.add("selected");
-                playerInputs.numbers.push({idx, value});
-                updateHistory(value);
-                return;
-            }
-        }
+    //Toggle selection
+    const exSelectedIdx = playerInputs.numbers.findIndex((num) => {
+        return num.idx === idx;
     });
-
-    //Select operator
-    operatorBoard.addEventListener('click', (evt) => {
-        const id = evt.target.id;
-        if (id === 'equal') {
-            if (playerInputs.numbers.length !== 2 || !playerInputs.operations) {
-                evt.target.classList.remove("selected");
-                return;
-            } else {
-                solveEquation();
-                resetSelectedButton();
-                return;
-            }
-        }
-        if (playerInputs.numbers.length === 1){
-            if (!playerInputs.operations){
-                switch (id) {
-                    case 'plus':
-                        playerInputs.operations = '+';
-                        break;
-                    case 'minus':
-                        playerInputs.operations = '-';
-                        break;
-                    case 'multiply':
-                        playerInputs.operations = '*';
-                        break;
-                    case 'divide':
-                        playerInputs.operations = '/';
-                        break;
-                }
-                evt.target.classList.add("selected");
-                if (playerInputs.operations) {
-                    updateHistory(playerInputs.operations);
-                }
-            } else {
-            updateHistory(playerInputs.operations, 'remove');
-            playerInputs.operations = null;
+    if (exSelectedIdx !== -1) {
+        if (playerInputs.numbers.length === 1) {
+            playerInputs.numbers.splice(exSelectedIdx, 1);
+            deleteHistoryEl();
             evt.target.classList.remove("selected");
             return;
-            }
-        if (playerInputs.operations) {
+        } else if (playerInputs.numbers.length === 2) {
+            updateHistoryEl(value, 'remove');
+            playerInputs.numbers.splice(exSelectedIdx, 1);
+            evt.target.classList.remove("selected");
             return;
         }
     }
-    })
-}
+
+    //Player select first number
+    if (playerInputs.numbers.length === 0) {
+        evt.target.classList.add("selected");
+        playerInputs.numbers.push({idx, value});
+        createHistoryElement(value);
+        return;
+    }
+    // Player select second number
+    if (playerInputs.numbers.length === 1 && playerInputs.operation) {
+        if (((playerInputs.operation === '-') && (playerInputs.numbers[0].value < value)) ||
+        ((playerInputs.operation === '/') && (playerInputs.numbers[0].value < value) && (playerInputs.numbers[0].value % value !== 0))) {
+            return;
+        } else {
+            evt.target.classList.add("selected");
+            playerInputs.numbers.push({idx, value});
+            updateHistoryEl(value);
+            return;
+        }
+    }
+    render();
+});
+
+operatorBoard.addEventListener('click', (evt) => {
+    const id = evt.target.id;
+    if (id === 'equal') {
+        if (playerInputs.numbers.length !== 2 || !playerInputs.operation) {
+            evt.target.classList.remove("selected");
+            return;
+        } else {
+            solveEquation();
+            resetSelectedButton();
+            return;
+        }
+    }
+    if (playerInputs.numbers.length === 1){
+        if (!playerInputs.operation){
+            switch (id) {
+                case 'plus':
+                    playerInputs.operation = '+';
+                    break;
+                case 'minus':
+                    playerInputs.operation = '-';
+                    break;
+                case 'multiply':
+                    playerInputs.operation = '*';
+                    break;
+                case 'divide':
+                    playerInputs.operation = '/';
+                    break;
+            }
+            evt.target.classList.add("selected");
+            if (playerInputs.operation) {
+                updateHistoryEl(playerInputs.operation);
+            }
+        } else {
+            updateHistoryEl(playerInputs.operation, 'remove');
+            playerInputs.operation = null;
+            evt.target.classList.remove("selected");
+            return;
+        }
+        if (playerInputs.operation) {
+            return;
+        }
+    }
+    render();
+});
+
 
 startNewGame.addEventListener('click', (evt) => {
     init();
+})
+
+instructionsBtn.addEventListener("click", (evt) => {
+    instructions.hidden = !instructions.hidden;
+    instructionsBtn.textContent = instructions.hidden ? "Show Instructions" : "Hide Instructions";
 })

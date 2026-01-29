@@ -11,6 +11,18 @@
     <main class="game">
         <h1>MATH CHAIN</h1>
         
+        <button id="viewInstructions">View Instructions</button>
+        <div id="instructions" hidden>
+            <ol>
+                <li>Select the first number on the board. You can toggle it by clicking again.</li>
+                <li>Select an operator (<strong>+</strong>, <strong>-</strong>, <strong>×</strong>, <strong>÷</strong>). Operator selection can also be toggled.</li>
+                <li>Select the second number. Subtraction result must be positive, division must be exact.</li>
+                <li>Click <strong>=</strong> to solve the euation.</li>
+                <li>Repeat until you reach the target number.</li>
+                <li>Your moves are displays in the history board. Undo last move by using the <strong>Undo</strong> button.</li>
+                <li>After winning, click <strong>Start New Game</strong> to begin a new game.</li>
+            </ol>
+        </div>
         <section class="player-status">
             <h2>Time: <span id="time"></span></h2>
             <h2>Moves: <span id="moves"></span></h2>
