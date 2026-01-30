@@ -11,7 +11,10 @@
     <main class="game">
         <h1>MATH CHAIN</h1>
         
-        <button id="viewInstructions">View Instructions</button>
+        <div class="function">
+            <button id="main-menu">Main Menu</button>
+            <button id="viewInstructions">View Instructions</button>
+        </div>
         <div id="instructions" hidden>
             <ol>
                 <li>Select the first number on the board. You can toggle it by clicking again.</li>
@@ -23,6 +26,7 @@
                 <li>After winning, click <strong>Start New Game</strong> to begin a new game.</li>
             </ol>
         </div>
+
         <section class="player-status">
             <h2>Time: <span id="time"></span></h2>
             <h2>Moves: <span id="moves"></span></h2>
@@ -59,6 +63,15 @@
                 <button id="startNewGame">Play Again!</button>
             </div>
         </div>
+
+        <section class="difficulty-level">
+            <p class="choose-level">Pick Your Challenge!</p>
+            <button id="btn-easy">Easy</button>
+            <button id="btn-medium">Medium</button>
+            <button id="btn-hard">Hard</button>
+        </section>
+
+
     </main>
 </body>
 </html>

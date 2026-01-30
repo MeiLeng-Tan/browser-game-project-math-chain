@@ -1,7 +1,4 @@
 /*-------------------------------- Constants --------------------------------*/
-const operations = ['+', '-', '*', '/'];
-const minRandomNum = 1;
-const maxRandomNum = 50;
 let startTime;
 
 /*---------------------------- Variables (state) ----------------------------*/
@@ -9,10 +6,34 @@ const gameState = {
     target: 0,
     time: 0,
     moves: 0,
-    status: "playing",
+    status: 'start', //"start", "playing", "win"
     randomNumArr: [],
-    level: [6, 8, 10]
+    level: null
 };
+
+const gameLevels = {
+    easy: {
+        randomNumberLength: 6,
+        maxDoubleDigits: 1,
+        operations: ['+', '-'],
+        min: 1,
+        max: 50,
+    },
+    medium: {
+        randomNumberLength: 6,
+        maxDoubleDigits: 1,
+        operations: ['+', '-', '*', '/'],
+        min: 1,
+        max: 50,
+    },
+    hard: {
+        randomNumberLength: 6,
+        maxDoubleDigits: 2,
+        operations: ['+', '-', '*', '/'],
+        min: 1,
+        max: 80,
+    }
+}
 
 const numBoardButtonVis = {
     visible: [], //true if visible
@@ -42,22 +63,25 @@ const totalTime = document.querySelector("#total-time");
 const totalMoves = document.querySelector("#total-moves");
 const instructionsBtn = document.querySelector("#viewInstructions");
 const instructions = document.querySelector("#instructions");
+const difficultyLvl = document.querySelector(".difficulty-level");
+const easyLvlBtn = document.querySelector("#btn-easy");
+const mediumLvlBtn = document.querySelector("#btn-medium");
+const hardLvlBtn = document.querySelector("#btn-hard");
+const mainMenu = document.querySelector("#main-menu");
 
 /*-------------------------------- Functions --------------------------------*/
-init();
-render();
-
 function init() {
+    if (!gameState.level) return;
     gameState.time = 0;
     gameState.moves = 0;
-    gameState.status = 'playing';
     moveHistory.moves = [];
     playerInputs.numbers = [];
     playerInputs.operation = null;
     startTime = Date.now();
     //Initialize game board
-    gameState.randomNumArr = generateRandomNumber(6, 1);
-    gameState.target = generateTarget(gameState.randomNumArr, 5)
+    const level = gameLevels[gameState.level];
+    gameState.randomNumArr = generateRandomNumber(level);
+    gameState.target = generateTarget(gameState.randomNumArr)
     //Initialize board state 
     numBoardButtonVis.visible = new Array(gameState.randomNumArr.length).fill(true);
     //clear history
@@ -82,6 +106,21 @@ function render() {
             btn.removeAttribute("hidden");
         }
     })    
+    //Update operator button in game board
+    if (gameState.level === 'easy') {
+        operatorButtons.forEach((btn) => {
+            if (!gameLevels[gameState.level].operations.includes(btn.textContent)) {
+                btn.setAttribute("hidden", "hidden");
+            }
+            if (btn.textContent === '=') {
+                btn.removeAttribute("hidden");
+            }
+        });
+    } else {
+        operatorButtons.forEach((btn) => {
+            btn.removeAttribute("hidden");
+        })
+    }
     //Update win message UI
     if (gameState.status === 'win') {
         totalTime.textContent = gameState.time;
@@ -92,6 +131,12 @@ function render() {
         winMessage.classList.remove("show");
         startNewGame.setAttribute("hidden", "hidden")
     }
+    //Update difficulty level UI
+    if (gameState.status === 'start') {
+        difficultyLvl.removeAttribute("hidden");
+    } else {
+        difficultyLvl.setAttribute("hidden", "hidden");
+    }   
 }
 
 function countTime() {
@@ -104,16 +149,23 @@ function countTime() {
     requestAnimationFrame(countTime);    
 }
 
-function generateRandomNumber(n, nDoubleDigit){
+function generateRandomNumber(level){
+    const {
+        randomNumberLength,
+        maxDoubleDigit,
+        operations,
+        min,
+        max
+    } = level;
     const randomNums = [];
-    let nDouble = 0;
-    while (randomNums.length < n) {
-        let randomNum = Math.floor(Math.random() * (maxRandomNum - minRandomNum) + minRandomNum);
+    let doubleDigitsCount = 0;
+    while (randomNums.length < randomNumberLength) {
+        let randomNum = Math.floor(Math.random() * (max - min) + min);
         if (!randomNums.includes(randomNum)){
             if (randomNum>10) {
-                if (nDouble < nDoubleDigit) {
+                if (doubleDigitsCount < maxDoubleDigit) {
                     randomNums.push(randomNum);
-                    nDouble = nDouble + 1;
+                    doubleDigitsCount = doubleDigitsCount + 1;
                 } 
             } else {
                 randomNums.push(randomNum);
@@ -128,7 +180,7 @@ function randomOperation(operations) {
     return operations[idx];
 }
 
-function getValidOperation(a, b){
+function getValidOperation(a, b, operations){
     let operation = randomOperation(operations);
     while (operation === '/' && (a % b !== 0)) {
         operation = randomOperation(operations);
@@ -149,9 +201,11 @@ function calculate(operation, a, b) {
     }
 }
 
-function generateTarget(randomNumsArr, maxSelectNum) {
+function generateTarget(randomNumsArr) {
     const availableNums = [...randomNumsArr];
     const pickedNums = [];
+    const maxSelectNum = randomNumsArr.length - 1;
+    const operations = gameLevels[gameState.level].operations;
     
     while (pickedNums.length < maxSelectNum && availableNums.length > 0) {
         let idx = Math.floor(Math.random() * availableNums.length);
@@ -165,12 +219,12 @@ function generateTarget(randomNumsArr, maxSelectNum) {
         if (usePair) {
             //Swapping to ensure the result is positive
             if (pickedNums[i] < pickedNums[i + 1]) {
-                let operation = getValidOperation(pickedNums[i + 1], pickedNums[i]);
+                let operation = getValidOperation(pickedNums[i + 1], pickedNums[i], operations);
                 let result = calculate(operation, pickedNums[i + 1], pickedNums[i]);
                 interResult.push(result);
                 i += 2;
             } else {
-                let operation = getValidOperation(pickedNums[i], pickedNums[i + 1]);
+                let operation = getValidOperation(pickedNums[i], pickedNums[i + 1], operations);
                 let result = calculate(operation, pickedNums[i], pickedNums[i + 1]);
                 interResult.push(result);
                 i += 2;
@@ -184,10 +238,10 @@ function generateTarget(randomNumsArr, maxSelectNum) {
     let target = interResult[0];
     for (let i = 1; i < interResult.length; i++) {
         if (target < interResult[i]) {
-            let operation = getValidOperation(interResult[i], target);
+            let operation = getValidOperation(interResult[i], target, operations);
             target = calculate(operation, interResult[i], target); 
         } else {
-            let operation = getValidOperation(target, interResult[i]);
+            let operation = getValidOperation(target, interResult[i], operations);
             target = calculate(operation, target, interResult[i]); 
         }
     }
@@ -398,12 +452,39 @@ operatorBoard.addEventListener('click', (evt) => {
     render();
 });
 
-
 startNewGame.addEventListener('click', (evt) => {
+    gameState.status = 'playing';
     init();
 })
 
 instructionsBtn.addEventListener("click", (evt) => {
     instructions.hidden = !instructions.hidden;
     instructionsBtn.textContent = instructions.hidden ? "Show Instructions" : "Hide Instructions";
+})
+
+easyLvlBtn.addEventListener("click", (evt) => {
+    gameState.level = 'easy';
+    gameState.status = 'playing';
+    init();
+    render();
+});
+
+mediumLvlBtn.addEventListener("click", (evt) => {
+    gameState.level = 'medium';
+    gameState.status = 'playing';
+    init()
+    render();
+});
+
+hardLvlBtn.addEventListener("click", (evt) => {
+    gameState.level = 'hard';
+    gameState.status = 'playing';
+    init();
+    render();
+});
+
+mainMenu.addEventListener('click', (evt) => {
+    gameState.status = 'start';
+    gameState.level = null;
+    render();
 })

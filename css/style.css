@@ -18,6 +18,15 @@ h1 {
     margin-bottom: 10px;
 }
 
+.function {
+    max-width: 350px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    gap: 50px;
+}
+
+#main-menu, 
 #viewInstructions {
     margin: 5px auto 5px;
     padding: 6px 12px;
@@ -196,7 +205,6 @@ h1 {
     border: 4px solid #222;
     border-radius: 16px;
     padding: 15px;
-    /*min-height: 120px;*/
     max-height: 360px;
     overflow-y: auto;
     box-shadow: 0 6px 0 #222;
@@ -253,4 +261,44 @@ h1 {
 .history-move button:active{
     transform: translateY(0);
     box-shadow: 0 1px 0 #222;
+}
+
+.difficulty-level {
+    background: #f7f1e3;
+    width: 100%;
+    height: 80%;
+    position: absolute;
+    top: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.difficulty-level[hidden] {
+    display: none;
+}
+.choose-level{
+    color: black;
+    font-size: 25px;
+}
+
+#btn-easy, 
+#btn-medium,
+#btn-hard {
+    margin-top: 20px;
+    padding: 12px 20px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    border-radius: 12px;
+    border: none;
+    background: #ff8c1a;
+    cursor: pointer;
+    width: 50%;
+}
+
+#btn-easy:hover,
+#btn-medium:hover,
+#btn-hard:hover {
+    background: #670e0e;
+    color: white;
 }
